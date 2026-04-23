@@ -813,9 +813,11 @@ mark {
 'use strict';
 
 /* ── Config ──────────────────────────────────────────────────────────── */
-// Primary: rss2json.com (returns ready-parsed JSON, most stable)
-// Fallback 1: corsproxy.io (raw XML)
-// Fallback 2: allorigins.win/raw (raw XML)
+// Primary: Cloudflare Worker (self-hosted, no rate limits, raw XML)
+// Fallback 1: rss2json.com (returns parsed JSON, no XML needed)
+// Fallback 2: corsproxy.io (raw XML)
+// Fallback 3: allorigins.win/raw (raw XML)
+const CF_WORKER = 'https://triet-news-proxy.minhtriet1214.workers.dev';
 
 /* ── Source status (drives debug bar) ───────────────────────────────── */
 const sourceStatus = new Map();
@@ -970,6 +972,14 @@ function timedFetch(url, ms = 12000) {
 }
 
 /* ── Individual proxy attempts ───────────────────────────────────────── */
+async function tryWorker(feed) {
+  const r = await timedFetch(`${CF_WORKER}/?url=${encodeURIComponent(feed.url)}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const items = parseRSSXML(await r.text(), feed);
+  if (!items.length) throw new Error('0 items parsed from XML');
+  return items;
+}
+
 async function tryRss2json(feed) {
   const u = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&api_key=&count=20`;
   const r = await timedFetch(u);
@@ -999,8 +1009,9 @@ async function tryAllorigins(feed) {
 /* ── Try full proxy chain, return first success ──────────────────────── */
 async function tryProxyChain(feed) {
   const proxies = [
-    { label: 'rss2json',   fn: tryRss2json   },
-    { label: 'corsproxy',  fn: tryCorsproxy  },
+    { label: 'cf-worker',  fn: tryWorker    },
+    { label: 'rss2json',   fn: tryRss2json  },
+    { label: 'corsproxy',  fn: tryCorsproxy },
     { label: 'allorigins', fn: tryAllorigins }
   ];
   for (const p of proxies) {
