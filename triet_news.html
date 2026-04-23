@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triết News — Tin tức chiến sự 24/7</title>
+<style>
+/* ═══ RESET & VARS ═══════════════════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:      #0a0a0a;
+  --bg2:     #0f0f0f;
+  --bg3:     #141414;
+  --bg4:     #1a1a1a;
+  --border:  #1e1e1e;
+  --border2: #272727;
+  --red:     #c0392b;
+  --red2:    #e74c3c;
+  --orange:  #e67e22;
+  --orange2: #f39c12;
+  --text:    #f0f0f0;
+  --text2:   #999999;
+  --text3:   #555555;
+  --vn-accent:  #c0392b;
+  --int-accent: #e67e22;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  line-height: 1.55;
+  overflow-x: hidden;
+}
+
+/* Grain texture overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.038;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: overlay;
+}
+
+/* ═══ SCROLLBAR ══════════════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--red); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--orange); }
+
+/* ═══ HEADER ═════════════════════════════════════════════════════════════ */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: #000;
+  border-bottom: 3px solid var(--red);
+  box-shadow: 0 2px 30px rgba(192,57,43,0.2);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-logo {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, var(--red) 0%, var(--orange) 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 19px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -1px;
+  box-shadow: 0 4px 15px rgba(192,57,43,0.45), 0 1px 3px rgba(0,0,0,0.8);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.brand-info { display: flex; flex-direction: column; gap: 3px; }
+
+.brand-name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  background: linear-gradient(90deg, var(--red2) 0%, var(--orange) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.brand-tagline {
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 1.2px;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.live-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(192,57,43,0.12);
+  border: 1px solid rgba(192,57,43,0.4);
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--red2);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--red2);
+  border-radius: 50%;
+  animation: livePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(231,76,60,0.5); }
+  50% { opacity: 0.6; box-shadow: 0 0 0 5px rgba(231,76,60,0); }
+}
+
+.clock {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--orange);
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.clock-date {
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ═══ BREAKING TICKER ════════════════════════════════════════════════════ */
+.breaking-bar {
+  display: none;
+  align-items: stretch;
+  background: var(--red);
+  overflow: hidden;
+  height: 34px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.breaking-bar.show { display: flex; }
+
+.breaking-label {
+  background: #000;
+  color: var(--red2);
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  border-right: 2px solid rgba(255,255,255,0.15);
+  animation: blink 0.9s step-end infinite;
+}
+
+@keyframes blink { 50% { opacity: 0.5; } }
+
+.ticker-wrap { flex: 1; overflow: hidden; display: flex; align-items: center; }
+
+.ticker-inner {
+  white-space: nowrap;
+  animation: ticker 55s linear infinite;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  padding: 0 40px;
+  letter-spacing: 0.5px;
+}
+
+@keyframes ticker {
+  0%   { transform: translateX(100vw); }
+  100% { transform: translateX(-200%); }
+}
+
+/* ═══ STATUS BAR ═════════════════════════════════════════════════════════ */
+.status-bar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 7px 28px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-size: 11px;
+  color: var(--text3);
+  flex-wrap: wrap;
+}
+
+.st-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 14px;
+  border-right: 1px solid var(--border2);
+}
+
+.st-item:first-child { padding-left: 0; }
+.st-item:last-child  { border-right: none; }
+
+.st-val { color: var(--text); font-weight: 600; }
+.st-val.red { color: var(--red2); }
+
+.st-spacer { flex: 1; }
+
+.refresh-spin {
+  width: 7px; height: 7px;
+  background: #3a3;
+  border-radius: 50%;
+}
+
+.refresh-spin.active { background: var(--orange); animation: spinDot 1s linear infinite; }
+
+@keyframes spinDot {
+  0%   { transform: rotate(0deg) scale(1);   opacity: 1; }
+  50%  { transform: rotate(180deg) scale(.6); opacity: .5; }
+  100% { transform: rotate(360deg) scale(1);  opacity: 1; }
+}
+
+.btn-refresh {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text3);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 3px 11px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.btn-refresh:hover { border-color: var(--red); color: var(--red); }
+.btn-refresh:disabled { opacity: .5; cursor: default; }
+
+/* ═══ CONTROLS ═══════════════════════════════════════════════════════════ */
+.controls {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.search-wrap { flex: 1; min-width: 200px; position: relative; }
+
+.search-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  padding: 8px 12px 8px 34px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .2s;
+}
+
+.search-input:focus { border-color: var(--red); }
+.search-input::placeholder { color: var(--text3); }
+
+.filters { display: flex; gap: 7px; flex-wrap: wrap; }
+
+.f-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 5px 14px;
+  color: var(--text3);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+
+.f-btn:hover { border-color: var(--text2); color: var(--text); }
+
+.f-btn.on {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ═══ NEWSPAPER DIVIDER ══════════════════════════════════════════════════ */
+.nwsp-div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px 0;
+  color: var(--text3);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.nwsp-div::before, .nwsp-div::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border2), transparent);
+}
+
+/* ═══ MAIN 2-COLUMN GRID ═════════════════════════════════════════════════ */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  padding: 16px 28px 32px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* ═══ COLUMN HEADERS ═════════════════════════════════════════════════════ */
+.col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border2);
+  position: relative;
+}
+
+.col-vn  .col-head::after { background: var(--vn-accent); }
+.col-int .col-head::after { background: var(--int-accent); }
+
+.col-head::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 56px;
+  height: 2px;
+}
+
+.col-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.col-badge {
+  font-size: 12px;
+  font-family: -apple-system, system-ui, sans-serif;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 3px 11px;
+  color: var(--text2);
+  font-weight: 500;
+}
+
+/* ═══ CARD ════════════════════════════════════════════════════════════════ */
+.card {
+  display: block;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+  animation: fadeUp .35s ease-out both;
+  cursor: pointer;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.card:hover {
+  border-color: var(--red);
+  box-shadow: 0 4px 22px rgba(192,57,43,0.14);
+  transform: translateY(-2px);
+}
+
+.card.breaking {
+  border-color: rgba(192,57,43,0.45);
+  animation: fadeUp .35s ease-out both, cardPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes cardPulse {
+  0%, 100% { border-color: rgba(192,57,43,0.45); }
+  50%       { border-color: rgba(192,57,43,0.95); box-shadow: 0 0 14px rgba(192,57,43,0.2); }
+}
+
+/* Thumbnail */
+.card-thumb {
+  width: 100%;
+  height: 168px;
+  object-fit: cover;
+  display: block;
+  background: var(--bg4);
+  border-bottom: 1px solid var(--border);
+}
+
+.card-no-thumb {
+  width: 100%;
+  height: 68px;
+  background: linear-gradient(135deg, var(--bg3), var(--bg4));
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: var(--border2);
+}
+
+/* Card body */
+.card-body { padding: 14px 16px 13px; }
+
+.card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  gap: 8px;
+}
+
+.src-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.src-badge {
+  width: 32px;
+  height: 19px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -.5px;
+  flex-shrink: 0;
+}
+
+.src-name {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Urgency badges */
+.urg {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+
+.urg-breaking   { background: var(--red); color: #fff; animation: blink .9s step-end infinite; }
+.urg-developing { background: var(--orange); color: #000; }
+.urg-latest     { background: transparent; border: 1px solid #4a3a00; color: var(--orange2); }
+
+/* Card text */
+.card-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.42;
+  letter-spacing: -.1px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.card-summary {
+  font-size: 12.5px;
+  color: var(--text2);
+  line-height: 1.58;
+  margin-bottom: 11px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-foot {
+  border-top: 1px solid var(--border);
+  padding-top: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-foot-src {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: .75;
+}
+
+.card-time { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+
+/* Search highlight */
+mark {
+  background: rgba(192,57,43,0.22);
+  color: var(--orange);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* ═══ LOADING / EMPTY ════════════════════════════════════════════════════ */
+.state-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 14px;
+}
+
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border2);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin .85s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.state-loading p { font-size: 12px; color: var(--text3); letter-spacing: 2px; }
+
+.state-empty { text-align: center; padding: 50px 20px; color: var(--text3); font-size: 13px; }
+
+/* ═══ ERROR STATE ════════════════════════════════════════════════════════ */
+.state-error {
+  text-align: center;
+  padding: 44px 20px;
+  border: 1px dashed var(--border2);
+  border-radius: 7px;
+  margin: 4px 0;
+}
+
+.state-error .err-icon { font-size: 36px; margin-bottom: 12px; }
+
+.state-error .err-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+
+.state-error .err-detail {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.7;
+  margin-bottom: 18px;
+}
+
+.btn-retry {
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 7px 22px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.btn-retry:hover { background: var(--red); color: #fff; }
+
+/* ═══ FOOTER ═════════════════════════════════════════════════════════════ */
+.site-footer {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 16px 28px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text3);
+  letter-spacing: .5px;
+}
+
+.site-footer strong { color: var(--red2); }
+
+/* ═══ RESPONSIVE ════════════════════════════════════════════════════════ */
+@media (max-width: 860px) {
+  .main-grid { grid-template-columns: 1fr; gap: 0; padding: 14px 16px 28px; }
+  .header-top { padding: 10px 16px; }
+  .brand-name { font-size: 21px; }
+  .clock { font-size: 19px; }
+  .status-bar, .controls, .nwsp-div { padding-left: 16px; padding-right: 16px; }
+  .st-item { padding: 0 10px; }
+  .col-int { border-top: 2px solid var(--border2); padding-top: 20px; }
+}
+
+@media (max-width: 500px) {
+  .header-top { flex-wrap: wrap; gap: 10px; }
+  .brand-logo { width: 40px; height: 40px; font-size: 15px; }
+  .brand-name { font-size: 18px; }
+  .clock { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-top">
+    <div class="brand">
+      <div class="brand-logo">TN</div>
+      <div class="brand-info">
+        <div class="brand-name">Triết News</div>
+        <div class="brand-tagline">Tin tức chiến sự &bull; Cập nhật liên tục 24/7</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="clock-date" id="clockDate">...</div>
+    </div>
+  </div>
+
+  <!-- Breaking ticker -->
+  <div class="breaking-bar" id="breakingBar">
+    <div class="breaking-label">⚡ KHẨN CẤP</div>
+    <div class="ticker-wrap">
+      <div class="ticker-inner" id="tickerText"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ STATUS BAR ══════════════════════════════════════════════════════ -->
+<div class="status-bar">
+  <div class="st-item">Tổng <span class="st-val" id="stTotal">—</span> bài</div>
+  <div class="st-item">Khẩn <span class="st-val red" id="stBreaking">—</span></div>
+  <div class="st-item">Trong nước <span class="st-val" id="stVn">—</span></div>
+  <div class="st-item">Quốc tế <span class="st-val" id="stInt">—</span></div>
+  <div class="st-spacer"></div>
+  <div class="st-item">
+    <div class="refresh-spin" id="refreshDot"></div>
+    Làm mới sau <span class="st-val" id="countdown">60</span>s
+  </div>
+  <div class="st-item">Cập nhật <span class="st-val" id="stUpdated">—</span></div>
+  <div class="st-item">
+    <button class="btn-refresh" id="btnRefresh" onclick="manualRefresh()">↻ Làm mới</button>
+  </div>
+</div>
+
+<!-- ═══ CONTROLS ════════════════════════════════════════════════════════ -->
+<div class="controls">
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input
+      type="text"
+      id="searchInput"
+      class="search-input"
+      placeholder="Tìm kiếm tin tức... (Iran, tên lửa, hạt nhân, chiến sự...)"
+    >
+  </div>
+  <div class="filters" id="filters">
+    <button class="f-btn on" data-kw="">Tất cả</button>
+    <button class="f-btn" data-kw="iran">🇮🇷 Iran</button>
+    <button class="f-btn" data-kw="mỹ,america,united states,washington">🇺🇸 Mỹ</button>
+    <button class="f-btn" data-kw="chiến sự,conflict,war,xung đột">⚔️ Chiến sự</button>
+    <button class="f-btn" data-kw="tấn công,attack,strike,không kích">💥 Tấn công</button>
+    <button class="f-btn" data-kw="hạt nhân,nuclear,uranium">☢️ Hạt nhân</button>
+  </div>
+</div>
+
+<!-- Newspaper section divider -->
+<div class="nwsp-div">Tin tức hôm nay</div>
+
+<!-- ═══ MAIN 2-COLUMN GRID ══════════════════════════════════════════════ -->
+<div class="main-grid">
+
+  <!-- Vietnam column -->
+  <div class="col-vn">
+    <div class="col-head">
+      <div class="col-title">🇻🇳 Trong Nước</div>
+      <div class="col-badge" id="vnBadge">0 bài</div>
+    </div>
+    <div id="vnCards">
+      <div class="state-loading"><div class="spinner"></div><p>Đang tải tin...</p></div>
+    </div>
+  </div>
+
+  <!-- International column -->
+  <div class="col-int">
+    <div class="col-head">
+      <div class="col-title">🌍 Quốc Tế</div>
+      <div class="col-badge" id="intBadge">0 bài</div>
+    </div>
+    <div id="intCards">
+      <div class="state-loading"><div class="spinner"></div><p>Loading news...</p></div>
+    </div>
+  </div>
+
+</div><!-- /main-grid -->
+
+<!-- ═══ FOOTER ═══════════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  © 2026 <strong>Triết News</strong> &bull; Tổng hợp tin tức &bull; Không vì lợi nhuận &bull;
+  Nguồn: VnExpress &bull; Tuổi Trẻ &bull; Thanh Niên &bull; Reuters &bull; BBC &bull; Al Jazeera
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ── Config ──────────────────────────────────────────────────────────── */
+const PROXY1 = url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+const PROXY2 = url => `https://corsproxy.io/?${encodeURIComponent(url)}`;
+
+const VN_FEEDS = [
+  { name: 'VnExpress', url: 'https://vnexpress.net/rss/the-gioi.rss',  logo: 'VNE', color: '#1a73e8' },
+  { name: 'Tuổi Trẻ',  url: 'https://tuoitre.vn/rss/the-gioi.rss',    logo: 'TT',  color: '#cc0000' },
+  { name: 'Thanh Niên',url: 'https://thanhnien.vn/rss/the-gioi.rss',  logo: 'TN',  color: '#0057b8' }
+];
+
+const INTL_FEEDS = [
+  { name: 'Reuters',    url: 'https://feeds.reuters.com/reuters/worldNews',    logo: 'RTR', color: '#e85c00' },
+  { name: 'BBC',        url: 'https://feeds.bbci.co.uk/news/world/rss.xml',    logo: 'BBC', color: '#bb0000' },
+  { name: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml',      logo: 'AJE', color: '#009688' }
+];
+
+const BREAKING_KW = [
+  'attack','tấn công','strike','không kích','missile','tên lửa',
+  'war','chiến tranh','nuclear weapon','hạt nhân','bomb','bom',
+  'explosion','nổ','killed','thiệt mạng','assassin','ám sát',
+  'escalat','leo thang','troops','giao tranh','combat','airstr',
+  'intercept','destroy','ultimatum'
+];
+
+/* ── State ───────────────────────────────────────────────────────────── */
+let vnAll   = [];
+let intAll  = [];
+let kwFilter = '';
+let searchQ  = '';
+let cdVal    = 60;
+let cdTimer;
+
+/* ── Clock ───────────────────────────────────────────────────────────── */
+(function tickClock() {
+  const d = new Date();
+  document.getElementById('clock').textContent =
+    d.toLocaleTimeString('vi-VN', { hour12: false });
+  document.getElementById('clockDate').textContent =
+    d.toLocaleDateString('vi-VN', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+  setTimeout(tickClock, 1000);
+}());
+
+/* ── Countdown ───────────────────────────────────────────────────────── */
+function startCountdown() {
+  clearInterval(cdTimer);
+  cdVal = 60;
+  document.getElementById('countdown').textContent = 60;
+  cdTimer = setInterval(() => {
+    cdVal--;
+    document.getElementById('countdown').textContent = cdVal;
+    if (cdVal <= 0) { clearInterval(cdTimer); loadAll(); }
+  }, 1000);
+}
+
+/* ── RSS XML parser ──────────────────────────────────────────────────── */
+function parseRSSXML(xmlStr, feed) {
+  let doc;
+  try {
+    doc = new DOMParser().parseFromString(xmlStr, 'text/xml');
+  } catch (e) {
+    console.warn(`[${feed.name}] DOMParser error:`, e.message);
+    return [];
+  }
+
+  if (doc.querySelector('parsererror')) {
+    console.warn(`[${feed.name}] Malformed XML`);
+    return [];
+  }
+
+  const items = Array.from(doc.querySelectorAll('item'));
+  if (!items.length) {
+    console.warn(`[${feed.name}] Zero <item> elements found`);
+    return [];
+  }
+
+  return items.map(el => {
+    // Gets first matching tag text, handles CDATA transparently
+    const get = tag => {
+      const node = el.getElementsByTagName(tag)[0];
+      return node ? node.textContent.trim() : '';
+    };
+
+    const title = get('title') || '(no title)';
+
+    // <link> can be text node or Atom href attr
+    let link = get('link');
+    if (!link) {
+      const linkEl = el.getElementsByTagName('link')[0];
+      link = linkEl ? (linkEl.getAttribute('href') || '') : '';
+    }
+    if (!link) {
+      const guid = get('guid');
+      if (/^https?:\/\//.test(guid)) link = guid;
+    }
+
+    const description = get('description');
+    const pubDate     = get('pubDate') || get('dc:date') || get('updated') || '';
+    const content     = get('content:encoded') || '';
+
+    // ── Thumbnail extraction (try all common patterns) ──
+    let thumbnail = '';
+
+    // 1. media:thumbnail
+    const mediaThumbs = el.getElementsByTagName('media:thumbnail');
+    if (mediaThumbs.length) thumbnail = mediaThumbs[0].getAttribute('url') || '';
+
+    // 2. media:content (image medium)
+    if (!thumbnail) {
+      const mcs = el.getElementsByTagName('media:content');
+      for (const mc of mcs) {
+        const u = mc.getAttribute('url') || '';
+        const m = mc.getAttribute('medium') || '';
+        if (u && (m === 'image' || /\.(jpe?g|png|webp|gif)/i.test(u))) {
+          thumbnail = u; break;
+        }
+      }
+      if (!thumbnail && mcs.length) thumbnail = mcs[0].getAttribute('url') || '';
+    }
+
+    // 3. enclosure
+    const encEl = el.getElementsByTagName('enclosure')[0];
+    let enclosure = null;
+    if (encEl) {
+      const eu = encEl.getAttribute('url') || '';
+      const et = encEl.getAttribute('type') || '';
+      if (eu) {
+        enclosure = { link: eu, type: et };
+        if (!thumbnail && et.startsWith('image')) thumbnail = eu;
+      }
+    }
+
+    // 4. First <img> in description/content HTML
+    if (!thumbnail) {
+      const html = description || content;
+      const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (m && /^https?:\/\//.test(m[1])) thumbnail = m[1];
+    }
+
+    return { title, link, description, pubDate, content, thumbnail, enclosure, _feed: feed };
+  });
+}
+
+/* ── Fetch with timeout ──────────────────────────────────────────────── */
+function timedFetch(url, ms = 12000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+
+/* ── Fetch one feed via proxy chain ──────────────────────────────────── */
+async function fetchFeed(feed) {
+  // ── Proxy 1: allorigins.win ──
+  try {
+    console.log(`[${feed.name}] → allorigins.win`);
+    const r = await timedFetch(PROXY1(feed.url));
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    if (!j.contents) throw new Error('empty contents field');
+    const items = parseRSSXML(j.contents, feed);
+    console.log(`[${feed.name}] ✓ allorigins: ${items.length} items`);
+    return items;
+  } catch (e) {
+    console.warn(`[${feed.name}] ✗ allorigins failed: ${e.message}`);
+  }
+
+  // ── Proxy 2: corsproxy.io ──
+  try {
+    console.log(`[${feed.name}] → corsproxy.io`);
+    const r = await timedFetch(PROXY2(feed.url));
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const xml = await r.text();
+    const items = parseRSSXML(xml, feed);
+    console.log(`[${feed.name}] ✓ corsproxy: ${items.length} items`);
+    return items;
+  } catch (e) {
+    console.warn(`[${feed.name}] ✗ corsproxy failed: ${e.message}`);
+  }
+
+  console.error(`[${feed.name}] ✗✗ ALL proxies failed – returning empty`);
+  return [];
+}
+
+async function loadAll() {
+  const dot = document.getElementById('refreshDot');
+  const btn = document.getElementById('btnRefresh');
+  dot.classList.add('active');
+  btn.disabled = true;
+  btn.textContent = '↻ Đang tải...';
+
+  document.getElementById('vnCards').innerHTML  = loadingHTML('Đang tải...');
+  document.getElementById('intCards').innerHTML = loadingHTML('Loading...');
+
+  const [vnRes, intRes] = await Promise.all([
+    Promise.all(VN_FEEDS.map(fetchFeed)),
+    Promise.all(INTL_FEEDS.map(fetchFeed))
+  ]);
+
+  vnAll  = vnRes.flat().sort((a, b) => +new Date(b.pubDate) - +new Date(a.pubDate));
+  intAll = intRes.flat().sort((a, b) => +new Date(b.pubDate) - +new Date(a.pubDate));
+
+  dot.classList.remove('active');
+  btn.disabled = false;
+  btn.textContent = '↻ Làm mới';
+
+  const now = new Date();
+  document.getElementById('stUpdated').textContent =
+    now.toLocaleTimeString('vi-VN', { hour12: false });
+
+  // ── All sources failed? ──
+  if (vnAll.length + intAll.length === 0) {
+    console.error('ALL FEEDS RETURNED 0 ITEMS. Both proxies likely blocked or network offline.');
+    const errHTML = `
+      <div class="state-error">
+        <div class="err-icon">📡</div>
+        <p class="err-title">Không thể tải tin tức</p>
+        <p class="err-detail">
+          Cả hai proxy đều thất bại (allorigins.win &amp; corsproxy.io).<br>
+          Nguyên nhân có thể: mạng bị chặn, proxy quá tải, hoặc nguồn RSS ngừng hoạt động.<br>
+          Kiểm tra tab <strong>Console</strong> để xem chi tiết lỗi.
+        </p>
+        <button class="btn-retry" onclick="manualRefresh()">↻ Thử lại</button>
+      </div>`;
+    document.getElementById('vnCards').innerHTML  = errHTML;
+    document.getElementById('intCards').innerHTML = errHTML;
+    startCountdown();
+    return;
+  }
+
+  updateStats();
+  updateBreaking();
+  renderAll();
+  startCountdown();
+}
+
+function manualRefresh() {
+  clearInterval(cdTimer);
+  loadAll();
+}
+
+/* ── Stats ───────────────────────────────────────────────────────────── */
+function updateStats() {
+  const all = [...vnAll, ...intAll];
+  const b   = all.filter(isBreaking).length;
+  document.getElementById('stTotal').textContent    = all.length;
+  document.getElementById('stBreaking').textContent = b;
+  document.getElementById('stVn').textContent       = vnAll.length;
+  document.getElementById('stInt').textContent      = intAll.length;
+}
+
+/* ── Breaking ────────────────────────────────────────────────────────── */
+function isBreaking(a) {
+  const t = (a.title + ' ' + (a.description || '')).toLowerCase();
+  return BREAKING_KW.some(k => t.includes(k));
+}
+
+function updateBreaking() {
+  const brk = [...vnAll, ...intAll].filter(isBreaking);
+  const bar  = document.getElementById('breakingBar');
+  const txt  = document.getElementById('tickerText');
+  if (brk.length) {
+    bar.classList.add('show');
+    txt.textContent = brk.map(a => '⚡ ' + a.title).join('   ///   ');
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+/* ── Urgency ─────────────────────────────────────────────────────────── */
+function urgency(a) {
+  if (isBreaking(a)) return 'breaking';
+  const ageH = (Date.now() - new Date(a.pubDate)) / 3.6e6;
+  return (isNaN(ageH) || ageH > 6) ? 'latest' : 'developing';
+}
+
+/* ── Filters ─────────────────────────────────────────────────────────── */
+function matches(a) {
+  const t = (a.title + ' ' + (a.description || '') + ' ' + (a.content || '')).toLowerCase();
+  if (kwFilter) {
+    const kws = kwFilter.split(',');
+    if (!kws.some(k => t.includes(k.trim()))) return false;
+  }
+  if (searchQ && !t.includes(searchQ.toLowerCase())) return false;
+  return true;
+}
+
+/* ── Render ──────────────────────────────────────────────────────────── */
+function renderAll() {
+  const vnF  = vnAll.filter(matches);
+  const intF = intAll.filter(matches);
+
+  document.getElementById('vnBadge').textContent  = vnF.length + ' bài';
+  document.getElementById('intBadge').textContent = intF.length + ' bài';
+
+  document.getElementById('vnCards').innerHTML =
+    vnF.length  ? vnF.map((a, i)  => cardHTML(a, i))  .join('') : emptyHTML('Không tìm thấy bài nào phù hợp.');
+  document.getElementById('intCards').innerHTML =
+    intF.length ? intF.map((a, i) => cardHTML(a, i)).join('') : emptyHTML('No matching articles found.');
+}
+
+/* ── HTML helpers ────────────────────────────────────────────────────── */
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function highlight(raw, q) {
+  if (!q) return raw;
+  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+  return raw.replace(re, '<mark>$1</mark>');
+}
+
+function stripHTML(html) {
+  const d = document.createElement('div');
+  d.innerHTML = html || '';
+  return d.textContent || '';
+}
+
+function safeURL(u) {
+  try {
+    const p = new URL(u);
+    return /^https?:$/.test(p.protocol) ? u : '#';
+  } catch { return '#'; }
+}
+
+function thumbOf(a) {
+  if (a.thumbnail && /^https?:\/\//.test(a.thumbnail)) return a.thumbnail;
+  if (a.enclosure?.link && /^https?:\/\//.test(a.enclosure.link)) return a.enclosure.link;
+  const m = (a.description || '').match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (m && /^https?:\/\//.test(m[1])) return m[1];
+  return null;
+}
+
+function timeAgo(ds) {
+  if (!ds) return '—';
+  const d = new Date(ds);
+  if (isNaN(d)) return '—';
+  const sec = (Date.now() - d) / 1000;
+  if (sec < 0)    return 'Sắp đăng';
+  if (sec < 60)   return 'Vừa đăng';
+  if (sec < 3600) return Math.floor(sec / 60) + ' phút trước';
+  if (sec < 86400)return Math.floor(sec / 3600) + ' giờ trước';
+  return Math.floor(sec / 86400) + ' ngày trước';
+}
+
+function pubTimeStr(ds) {
+  try {
+    const d = new Date(ds);
+    if (isNaN(d)) return '';
+    return d.toLocaleString('vi-VN', {
+      hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit'
+    });
+  } catch { return ''; }
+}
+
+const URG_CFG = {
+  breaking:   { cls: 'urg-breaking',   label: '🔴 KHẨN CẤP' },
+  developing: { cls: 'urg-developing', label: '🟠 ĐANG DIỄN RA' },
+  latest:     { cls: 'urg-latest',     label: '🟡 MỚI NHẤT' }
+};
+
+function cardHTML(a, idx) {
+  const u     = urgency(a);
+  const feed  = a._feed;
+  const thumb = thumbOf(a);
+  const rawTitle   = esc(a.title || '');
+  const rawSummary = esc(stripHTML(a.description || '').slice(0, 220));
+  const title   = highlight(rawTitle, esc(searchQ));
+  const summary = highlight(rawSummary, esc(searchQ));
+  const pubT    = pubTimeStr(a.pubDate);
+  const ago     = timeAgo(a.pubDate);
+  const url     = esc(safeURL(a.link || '#'));
+  const { cls, label } = URG_CFG[u];
+
+  const delay = Math.min(idx * 0.04, 0.6);
+
+  return `
+<a class="card${u === 'breaking' ? ' breaking' : ''}" href="${url}"
+   target="_blank" rel="noopener noreferrer"
+   style="animation-delay:${delay}s">
+  ${thumb
+    ? `<img class="card-thumb" src="${esc(thumb)}" alt="" loading="lazy"
+           onerror="this.outerHTML='<div class=\\'card-no-thumb\\'>📰</div>'">`
+    : `<div class="card-no-thumb">📰</div>`}
+  <div class="card-body">
+    <div class="card-top-row">
+      <div class="src-row">
+        <div class="src-badge" style="background:${esc(feed.color)}">${esc(feed.logo)}</div>
+        <span class="src-name" style="color:${esc(feed.color)}">${esc(feed.name)}</span>
+      </div>
+      <span class="urg ${cls}">${label}</span>
+    </div>
+    <div class="card-title">${title}</div>
+    ${summary ? `<div class="card-summary">${summary}</div>` : ''}
+    <div class="card-foot">
+      <span class="card-foot-src" style="color:${esc(feed.color)}">${esc(feed.name)}</span>
+      <span class="card-time">Xuất bản ${pubT ? pubT : ago}</span>
+    </div>
+  </div>
+</a>`;
+}
+
+function loadingHTML(msg) {
+  return `<div class="state-loading"><div class="spinner"></div><p>${esc(msg)}</p></div>`;
+}
+
+function emptyHTML(msg) {
+  return `<div class="state-empty">📭 ${esc(msg)}</div>`;
+}
+
+/* ── Events ──────────────────────────────────────────────────────────── */
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQ = e.target.value.trim();
+  renderAll();
+});
+
+document.getElementById('filters').addEventListener('click', e => {
+  const btn = e.target.closest('.f-btn');
+  if (!btn) return;
+  document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  kwFilter = btn.dataset.kw;
+  renderAll();
+});
+
+// '/' shortcut → focus search
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== document.getElementById('searchInput')) {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+  if (e.key === 'Escape') {
+    document.getElementById('searchInput').blur();
+  }
+});
+
+/* ── Boot ────────────────────────────────────────────────────────────── */
+loadAll();
+</script>
+</body>
+</html>
+```
