@@ -196,16 +196,28 @@ body::after {
 
 @keyframes blink { 50% { opacity: 0.5; } }
 
-.ticker-wrap { flex: 1; overflow: hidden; display: flex; align-items: center; }
+.ticker-wrap {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
 
 .ticker-inner {
   white-space: nowrap;
-  animation: ticker 55s linear infinite;
+  animation: ticker 28s linear infinite;
   font-size: 12px;
   font-weight: 700;
   color: #fff;
-  padding: 0 40px;
+  padding: 0 80px;
   letter-spacing: 0.5px;
+}
+
+.ticker-wrap:hover .ticker-inner {
+  animation-play-state: paused;
+  cursor: default;
 }
 
 @keyframes ticker {
@@ -563,6 +575,14 @@ body::after {
 
 .card-time { font-size: 11px; color: var(--text3); flex-shrink: 0; }
 
+/* Translation pending */
+.xlate-pending {
+  color: var(--text3);
+  font-style: italic;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+
 /* Search highlight */
 mark {
   background: rgba(192,57,43,0.22);
@@ -823,6 +843,42 @@ const CF_WORKER = 'https://triet-news-proxy.minhtriet1214.workers.dev';
 const sourceStatus = new Map();
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ── Translation cache + config ──────────────────────────────────────── */
+const xlateCache  = new Map(); // original EN title → translated VI title
+const INTL_NAMES  = new Set(['Reuters', 'BBC', 'Al Jazeera']);
+const XLATE_API   = 'https://libretranslate.com/translate';
+
+async function translateTitle(text) {
+  if (!text) return text;
+  if (xlateCache.has(text)) return xlateCache.get(text);
+  try {
+    const r = await fetch(XLATE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: text, source: 'en', target: 'vi', format: 'text', api_key: '' })
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    const out = j.translatedText || text;
+    xlateCache.set(text, out);
+    return out;
+  } catch {
+    xlateCache.set(text, text); // on failure, cache original so we don't retry
+    return text;
+  }
+}
+
+async function runTranslations() {
+  const els = Array.from(document.querySelectorAll('[data-xlate]'));
+  if (!els.length) return;
+  await Promise.allSettled(els.map(async el => {
+    const orig = el.dataset.xlate;
+    el.removeAttribute('data-xlate');
+    const translated = await translateTitle(orig);
+    el.innerHTML = highlight(esc(translated), esc(searchQ));
+  }));
+}
 
 const VN_FEEDS = [
   { name: 'VnExpress', url: 'https://vnexpress.net/rss/the-gioi.rss',  logo: 'VNE', color: '#1a73e8' },
@@ -1154,9 +1210,12 @@ function renderAll() {
   document.getElementById('intBadge').textContent = intF.length + ' bài';
 
   document.getElementById('vnCards').innerHTML =
-    vnF.length  ? vnF.map((a, i)  => cardHTML(a, i))  .join('') : emptyHTML('Không tìm thấy bài nào phù hợp.');
+    vnF.length  ? vnF.map((a, i) => cardHTML(a, i)).join('') : emptyHTML('Không tìm thấy bài nào phù hợp.');
   document.getElementById('intCards').innerHTML =
     intF.length ? intF.map((a, i) => cardHTML(a, i)).join('') : emptyHTML('No matching articles found.');
+
+  // Translate any pending international headlines asynchronously
+  runTranslations();
 }
 
 /* ── HTML helpers ────────────────────────────────────────────────────── */
@@ -1225,16 +1284,28 @@ function cardHTML(a, idx) {
   const u     = urgency(a);
   const feed  = a._feed;
   const thumb = thumbOf(a);
-  const rawTitle   = esc(a.title || '');
+  const origTitle  = a.title || '';
   const rawSummary = esc(stripHTML(a.description || '').slice(0, 220));
-  const title   = highlight(rawTitle, esc(searchQ));
-  const summary = highlight(rawSummary, esc(searchQ));
-  const pubT    = pubTimeStr(a.pubDate);
-  const ago     = timeAgo(a.pubDate);
-  const url     = esc(safeURL(a.link || '#'));
+  const summary    = highlight(rawSummary, esc(searchQ));
+  const pubT  = pubTimeStr(a.pubDate);
+  const ago   = timeAgo(a.pubDate);
+  const url   = esc(safeURL(a.link || '#'));
   const { cls, label } = URG_CFG[u];
-
   const delay = Math.min(idx * 0.04, 0.6);
+
+  // International headlines: use cached translation or show pending placeholder
+  let titleHTML, xlateAttr = '';
+  if (INTL_NAMES.has(feed.name)) {
+    const cached = xlateCache.get(origTitle);
+    if (cached) {
+      titleHTML = highlight(esc(cached), esc(searchQ));
+    } else {
+      titleHTML = `<span class="xlate-pending">🌐 Đang dịch...</span>`;
+      xlateAttr = ` data-xlate="${esc(origTitle)}"`;
+    }
+  } else {
+    titleHTML = highlight(esc(origTitle), esc(searchQ));
+  }
 
   return `
 <a class="card${u === 'breaking' ? ' breaking' : ''}" href="${url}"
@@ -1252,7 +1323,7 @@ function cardHTML(a, idx) {
       </div>
       <span class="urg ${cls}">${label}</span>
     </div>
-    <div class="card-title">${title}</div>
+    <div class="card-title"${xlateAttr}>${titleHTML}</div>
     ${summary ? `<div class="card-summary">${summary}</div>` : ''}
     <div class="card-foot">
       <span class="card-foot-src" style="color:${esc(feed.color)}">${esc(feed.name)}</span>
